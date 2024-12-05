@@ -1,32 +1,38 @@
 const express = require('express')
 const app = express()
+// Changing backend functionality, no longer 3000/notes, add api to path
+// (Learning about CORS) - cross-origin resource sharing: 
+// Mechanism that allows restricted resources on a web page to be requested from 
+// another sdomain outside the domain from which the first resource was served.
+// for our update from 3000/notes -> 3000/api/notes
+// need CORS middleware :) allows requests from other origins
 
 var morgan = require('morgan')
 
 app.use(express.json()) // value of body undefined without this 
 
-let persons = [
-    {
-        id: "1",
-        name: "Alex",
-        number: "123"
-      },
-      {
-        id: "2",
-        name: "Angela",
-        number: "234"
-      },
-      {
-        id: "3",
-        name: "Spongebob2",
-        number: "345"
-      },
-      {
-        id: "4",
-        name: "Spong",
-        number: "456"
-      }
+const cors = require('cors')
+app.use(cors())
+
+let notes = [
+  {
+    id:"1",
+    title:"testing",
+    content:"Hello"
+  },
+  {
+    id:"2",
+    title:"testing2",
+    content:"Hello2"
+  },
+  {
+    id:"3",
+    title:"testing3",
+    content:"Hello3"
+  }
 ]
+
+
 // Middleware: functions that are used to process req/res objects.
 // Should be enabled before the applications routes. 
 
@@ -59,6 +65,7 @@ const middlewaring = morgan(function (tokens, req, res) {
 
 //Defining a custom token for morgan. Adding request data logs for POST requests. 
 // for data we are dealing with the request
+
 const middlewaring =
 morgan.token('req-body', (req) => {
   if (req.method === 'POST'){
@@ -67,7 +74,8 @@ morgan.token('req-body', (req) => {
   }
   // if it is any other request (i.e GET) we don't need to do anything 
   return ""
-}) // token 
+}) // token
+ 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'))
 
 // routes
@@ -78,8 +86,8 @@ app.get('/', (request, response) => {
 
 
 // retrieve all items in phonebook
-app.get('/api/persons', (request, response) => {
-    response.json(persons)
+app.get('/api/notes', (request, response) => {
+    response.json(notes)
   }) // all
 
 
@@ -89,20 +97,20 @@ app.get('/info', (request, response) => {
   const d = Date()
   console.log("Date: ", d)
     //console.log("timestamp: ", request.date)
-    response.send(`<p>Phonebook has info for ${persons.length} people</p>
+    response.send(`<p>Note pad has info for ${notes.length} people</p>
       <p>${d}</p>`)
 }) // length of phonebook
 
 
 // retrieving individual data - colon defines parameters on the path
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/notes/:id', (request, response) => {
   const id = request.params.id // id value of the path param accessed with request object
   // that tells the request information
-  const person = persons.find(person => person.id === id)
+  const note = notes.find(note => note.id === id)
 
   // error checks before returning
-  if (person) {
-    response.json(person)
+  if (note) {
+    response.json(note)
   } else {
     response.status(404).end() // end() says request should be answered without data
   }
@@ -111,19 +119,19 @@ app.get('/api/persons/:id', (request, response) => {
 
 
 // deleting individual contact
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/notes/:id', (request, response) => {
   const id = request.params.id
   console.log('requesting to delete id: ', id)
-  persons = persons.filter(person => person.id !== id) // return new with everyone but id match
+  notes = notes.filter(note => note.id !== id) // return new with everyone but id match
   response.status(204).end()
 }) // deleting
 
 
 // adding new contacts - task: add id with random numbers (Not a personal choice)
-app.post('/api/persons', (request, response) => {
-  console.log("phonebook length before: ", persons.length)
+app.post('/api/notes', (request, response) => {
+  console.log("Notepad length before: ", notes.length)
   const body = request.body
-  if (!body.name || !body.number) {
+  if (!body.title || !body.content) {
     return response.status(400).json({
       error: 'name or number missing'
     })
@@ -131,28 +139,28 @@ app.post('/api/persons', (request, response) => {
 
   const rdm = genId()
   // person object to add if content exists
-  const person = {
+  const note = {
     id: rdm,
-    name: body.name,
-    number: body.number
+    title: body.title,
+    content: body.content
   }
   //Dont need this now that I am using morgan middleware
   //console.log("this is the new person: ", person)
   //console.log("Person's id: ", rdm)
-  persons = persons.concat(person)
-  console.log("phonebook length after: ", persons.length)
-  response.json(person)
+  notes = notes.concat(note)
+  console.log("Notepad length after: ", notes.length)
+  response.json(notes)
 })
 
 
 // get a random Id - helper for adding new contact (random id not a personal choice)
 const genId = () => {
   const randomId = 1 + 
-  (Math.floor(Math.random() * 10000)) // added floor for int rounding
+  (Math.floor(Math.random() * 1000000)) // added floor for int rounding
   return (String(randomId))
 }
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
