@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
 
+var morgan = require('morgan')
+
 app.use(express.json()) // value of body undefined without this 
 
 let persons = [
@@ -25,6 +27,48 @@ let persons = [
         number: "456"
       }
 ]
+// Middleware: functions that are used to process req/res objects.
+// Should be enabled before the applications routes. 
+
+const requestLogger = (request, response, next) => {
+  console.log('Method: ', request.method)
+  console.log('Path: ', request.path)
+  console.log('Body:  ', request.body)
+  console.log('---')
+  next()
+}
+
+//app.use(requestLogger)
+
+//const middlewaring = morgan('tiny')
+
+//const middlewaring = morgan(':method :url :status :response-time ms - :res[content-length]')
+/*
+const middlewaring = morgan(function (tokens, req, res) {
+  return [
+    tokens.method(req, res),
+    tokens.url(req, res),
+    tokens.status(req, res),
+    tokens.res(req, res, 'content-length'), '-',
+    tokens['response-time'](req, res), 'ms',
+
+  ].join(' ')
+})*/
+
+//const middlewaring = morgan('tiny')
+
+//Defining a custom token for morgan. Adding request data logs for POST requests. 
+// for data we are dealing with the request
+const middlewaring =
+morgan.token('req-body', (req) => {
+  if (req.method === 'POST'){
+    //return the body if we are adding 
+    return JSON.stringify(req.body)
+  }
+  // if it is any other request (i.e GET) we don't need to do anything 
+  return ""
+}) // token 
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'))
 
 // routes
 // Main page 
@@ -92,23 +136,24 @@ app.post('/api/persons', (request, response) => {
     name: body.name,
     number: body.number
   }
-  console.log("this is the body: ", person)
-  console.log("Person's id: ", rdm)
+  //Dont need this now that I am using morgan middleware
+  //console.log("this is the new person: ", person)
+  //console.log("Person's id: ", rdm)
   persons = persons.concat(person)
   console.log("phonebook length after: ", persons.length)
   response.json(person)
 })
 
 
-// get a random Id - helper for adding new contact 
+// get a random Id - helper for adding new contact (random id not a personal choice)
 const genId = () => {
   const randomId = 1 + 
   (Math.floor(Math.random() * 10000)) // added floor for int rounding
   return (String(randomId))
 }
 
-
 const PORT = 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
+//NOTE: GET should always be safe (return data rather than change anything in the db)
