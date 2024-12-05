@@ -11,6 +11,11 @@ var morgan = require('morgan')
 
 app.use(express.json()) // value of body undefined without this 
 
+
+// HTTP GET /index shows the frontend made with React.
+// GET to /api/notes handeled by backend code (this repo)
+app.use(express.static('dist')) // dist folder from front end repo
+
 const cors = require('cors')
 app.use(cors())
 
