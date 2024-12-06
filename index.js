@@ -17,6 +17,7 @@ const cors = require('cors')
 app.use(cors())
 
 
+
 // Middleware: functions that are used to process req/res objects.
 // Should be enabled before the applications routes. 
 const requestLogger = (request, response, next) => {
@@ -91,18 +92,12 @@ app.get('/api/notes/:id', (request, response) => {
 
 // deleting individual contact
 app.delete('/api/notes/:id', (request, response) => {
-  /*
-  const id = request.params.id
-  console.log('beep')
-  console.log('requesting to delete id: ', id)
-  notes = notes.filter(note => note.id !== id) // return new with everyone but id match
-  response.status(204).end()
-  */
- const id = request.params.id
- console.log('testing deletion of ', id)
+ console.log('deletion of ', request.params.id)
  //Note.deleteOne({"_id": id})
- Note.findByIdAndDelete(id)
- .then(() => response.status(204).end)
+ Note.findByIdAndDelete(request.params.id)
+ .then((result => {
+    response.status(204).end()
+ }))
  .catch(error => next(error))
 }) // deleting
 
