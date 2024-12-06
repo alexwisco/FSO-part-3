@@ -64,7 +64,7 @@ app.get('/info', (request, response) => {
   const d = Date()
   console.log("Date: ", d)
     //console.log("timestamp: ", request.date)
-    console.log('beep')
+    
     response.send(`<p>Note pad has info for ${Note.length} people</p>
       <p>${d}</p>`)
 }) // length of phonebook
@@ -103,10 +103,7 @@ app.delete('/api/notes/:id', (request, response) => {
  //Note.deleteOne({"_id": id})
  Note.findByIdAndDelete(id)
  .then(() => response.status(204).end)
- .catch(error => {
-  console.log(error)
-  response.status(500).end()
-})
+ .catch(error => next(error))
 }) // deleting
 
 
