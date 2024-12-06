@@ -1,46 +1,45 @@
+// Updating index.js to move backend to mongodb
+
 const express = require('express')
+const mongoose = require('mongoose')
 const app = express()
-// Changing backend functionality, no longer 3000/notes, add api to path
-// (Learning about CORS) - cross-origin resource sharing: 
-// Mechanism that allows restricted resources on a web page to be requested from 
-// another sdomain outside the domain from which the first resource was served.
-// for our update from 3000/notes -> 3000/api/notes
-// need CORS middleware :) allows requests from other origins
-
 var morgan = require('morgan')
-
 app.use(express.json()) // value of body undefined without this 
+const password = process.argv[2]
 
+// mongoose set up
+const url =
+`mongodb+srv://alexwisco29:${password}@cluster0.x64ci.mongodb.net/noteApp?retryWrites=true&w=majority&appName=Cluster0`
 
-// HTTP GET /index shows the frontend made with React.
-// GET to /api/notes handeled by backend code (this repo)
+mongoose.set('strictQuery', false)
+mongoose.connect(url)
+
+const noteSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  important: Boolean,
+})
+
+// Updating format of objects returned by Mongoose.
+noteSchema.set('toJSON', {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject._v
+  }
+})
+
+const Note = mongoose.model('Note', noteSchema)
+
 app.use(express.static('dist')) // dist folder from front end repo
 
 const cors = require('cors')
-app.use(cors())
 
-let notes = [
-  {
-    id:"1",
-    title:"testing",
-    content:"Hello"
-  },
-  {
-    id:"2",
-    title:"testing2",
-    content:"Hello2"
-  },
-  {
-    id:"3",
-    title:"testing3",
-    content:"Hello3"
-  }
-]
+app.use(cors())
 
 
 // Middleware: functions that are used to process req/res objects.
 // Should be enabled before the applications routes. 
-
 const requestLogger = (request, response, next) => {
   console.log('Method: ', request.method)
   console.log('Path: ', request.path)
@@ -48,29 +47,10 @@ const requestLogger = (request, response, next) => {
   console.log('---')
   next()
 }
-
 //app.use(requestLogger)
-
-//const middlewaring = morgan('tiny')
-
-//const middlewaring = morgan(':method :url :status :response-time ms - :res[content-length]')
-/*
-const middlewaring = morgan(function (tokens, req, res) {
-  return [
-    tokens.method(req, res),
-    tokens.url(req, res),
-    tokens.status(req, res),
-    tokens.res(req, res, 'content-length'), '-',
-    tokens['response-time'](req, res), 'ms',
-
-  ].join(' ')
-})*/
-
-//const middlewaring = morgan('tiny')
 
 //Defining a custom token for morgan. Adding request data logs for POST requests. 
 // for data we are dealing with the request
-
 const middlewaring =
 morgan.token('req-body', (req) => {
   if (req.method === 'POST'){
@@ -91,8 +71,11 @@ app.get('/', (request, response) => {
 
 
 // retrieve all items in phonebook
+// Updating for mongodb
 app.get('/api/notes', (request, response) => {
-    response.json(notes)
+    Note.find({}).then(notes => {
+      response.json(notes)
+    })
   }) // all
 
 
