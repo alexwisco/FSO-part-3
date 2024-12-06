@@ -1,35 +1,14 @@
-// Updating index.js to move backend to mongodb
+// Updating index.js to move backend to mongodb with note.js from models
+require('dotenv').config()
+const Note = require('./models/note')
 
 const express = require('express')
-const mongoose = require('mongoose')
 const app = express()
-var morgan = require('morgan')
 app.use(express.json()) // value of body undefined without this 
-const password = process.argv[2]
+var morgan = require('morgan')
 
-// mongoose set up
-const url =
-`mongodb+srv://alexwisco29:${password}@cluster0.x64ci.mongodb.net/noteApp?retryWrites=true&w=majority&appName=Cluster0`
+// All mongoose set up moves to ./models/note
 
-mongoose.set('strictQuery', false)
-mongoose.connect(url)
-
-const noteSchema = new mongoose.Schema({
-  title: String,
-  content: String,
-  important: Boolean,
-})
-
-// Updating format of objects returned by Mongoose.
-noteSchema.set('toJSON', {
-  transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString()
-    delete returnedObject._id
-    delete returnedObject._v
-  }
-})
-
-const Note = mongoose.model('Note', noteSchema)
 
 app.use(express.static('dist')) // dist folder from front end repo
 
@@ -92,16 +71,10 @@ app.get('/info', (request, response) => {
 
 // retrieving individual data - colon defines parameters on the path
 app.get('/api/notes/:id', (request, response) => {
-  const id = request.params.id // id value of the path param accessed with request object
-  // that tells the request information
-  const note = notes.find(note => note.id === id)
-
-  // error checks before returning
-  if (note) {
-    response.json(note)
-  } else {
-    response.status(404).end() // end() says request should be answered without data
-  }
+    Note.findById(request.params.id)
+      .then(note => {
+        response.json(note)
+      })
 }) // individual
 
 
@@ -116,42 +89,33 @@ app.delete('/api/notes/:id', (request, response) => {
 }) // deleting
 
 
-// adding new contacts - task: add id with random numbers (Not a personal choice)
+// adding new notes: mongodb backend version
 app.post('/api/notes', (request, response) => {
-
-  console.log('are we usig this post')
-  console.log("Notepad length before: ", notes.length)
   const body = request.body
-  if (!body.title || !body.content) {
-    return response.status(400).json({
-      error: 'name or number missing'
-    })
+
+  if (body.content === undefined || body.title === undefined) {
+    return response.status(400).json({error: 'Incomplete note'})
   }
 
-  const rdm = genId()
-  // person object to add if content exists
-  const note = {
-    id: rdm,
+  // Note object created using Note constructor.
+  const note = new Note({
     title: body.title,
-    content: body.content
-  }
-  //Dont need this now that I am using morgan middleware
-  //console.log("this is the new person: ", person)
-  //console.log("Person's id: ", rdm)
-  notes = notes.concat(note)
-  console.log("Notepad length after: ", notes.length)
-  response.json(notes)
-})
+    content: body.content,
+    important: body.important || false 
+  })
 
+  // request responded to inside save callback function.
+  // Ensures the response to the operation only happens
+  // if the operation is successful.
+  note.save().then(savedNote => {
+    response.json(savedNote)
+    //savedNote is ... a saved note.
+    // HTTP request automatically returns a formatted
+    //version of it using toJSON method.
+  })
+}) // post 
 
-// get a random Id - helper for adding new contact (random id not a personal choice)
-const genId = () => {
-  const randomId = 1 + 
-  (Math.floor(Math.random() * 1000000)) // added floor for int rounding
-  return (String(randomId))
-}
-
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
