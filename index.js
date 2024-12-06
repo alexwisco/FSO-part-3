@@ -64,7 +64,8 @@ app.get('/info', (request, response) => {
   const d = Date()
   console.log("Date: ", d)
     //console.log("timestamp: ", request.date)
-    response.send(`<p>Note pad has info for ${notes.length} people</p>
+    console.log('beep')
+    response.send(`<p>Note pad has info for ${Note.length} people</p>
       <p>${d}</p>`)
 }) // length of phonebook
 
@@ -73,7 +74,16 @@ app.get('/info', (request, response) => {
 app.get('/api/notes/:id', (request, response) => {
     Note.findById(request.params.id)
       .then(note => {
+        // error handling for non existents
+        if (note) {
         response.json(note)
+        } else {
+          response.status(404).end()
+        }
+      })
+      .catch(error => {
+        console.log(error)
+        response.status(500).end()
       })
 }) // individual
 
@@ -81,11 +91,22 @@ app.get('/api/notes/:id', (request, response) => {
 
 // deleting individual contact
 app.delete('/api/notes/:id', (request, response) => {
+  /*
   const id = request.params.id
   console.log('beep')
   console.log('requesting to delete id: ', id)
   notes = notes.filter(note => note.id !== id) // return new with everyone but id match
   response.status(204).end()
+  */
+ const id = request.params.id
+ console.log('testing deletion of ', id)
+ //Note.deleteOne({"_id": id})
+ Note.findByIdAndDelete(id)
+ .then(() => response.status(204).end)
+ .catch(error => {
+  console.log(error)
+  response.status(500).end()
+})
 }) // deleting
 
 
