@@ -126,6 +126,7 @@ app.get('/api/notes/:id', (request, response) => {
 // deleting individual contact
 app.delete('/api/notes/:id', (request, response) => {
   const id = request.params.id
+  console.log('beep')
   console.log('requesting to delete id: ', id)
   notes = notes.filter(note => note.id !== id) // return new with everyone but id match
   response.status(204).end()
@@ -134,6 +135,8 @@ app.delete('/api/notes/:id', (request, response) => {
 
 // adding new contacts - task: add id with random numbers (Not a personal choice)
 app.post('/api/notes', (request, response) => {
+
+  console.log('are we usig this post')
   console.log("Notepad length before: ", notes.length)
   const body = request.body
   if (!body.title || !body.content) {
