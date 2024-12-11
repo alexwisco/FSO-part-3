@@ -1,4 +1,6 @@
-//Testing file to learn mongoose 
+/**
+ * File is not used in the project, only used to learn mongoose.
+ */
 
 const mongoose = require('mongoose')
 const password = process.argv[2]
